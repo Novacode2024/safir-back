@@ -1,24 +1,44 @@
 from django.db import models
 from shortuuidfield import ShortUUIDField
 from django_resized import ResizedImageField
+from googletrans import Translator
 
+translator = Translator()
 
 class Main(models.Model):
     uuid = ShortUUIDField(primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        if not self.uuid:
+            for field in self._meta.fields:
+                if field.name.endswith('_uz'):
+                    uz_value = getattr(self, field.name)
+                    ru_field_name = field.name.replace('_uz', '_ru')
+                    en_field_name = field.name.replace('_uz', '_en')
+
+                    if uz_value:
+                        if hasattr(self, ru_field_name):
+                            setattr(self, ru_field_name, translator.translate(uz_value, src="uz", dest="ru").text)
+                        if hasattr(self, en_field_name):
+                            setattr(self, en_field_name, translator.translate(uz_value, src="uz", dest="en").text)
+        
+        super(Main, self).save(*args, **kwargs)
 
     class Meta:
         abstract = True
 
 
+
 class Category(Main):
     title_uz = models.CharField(max_length=255)
-    title_ru = models.CharField(max_length=255)
-    title_en = models.CharField(max_length=255)
-    description_uz = models.TextField()
-    description_ru = models.TextField()
-    description_en = models.TextField()
+    title_ru = models.CharField(max_length=255, null=True, blank=True)
+    title_en = models.CharField(max_length=255, null=True, blank=True)
+    description_uz = models.TextField(null=True, blank=True)
+    description_ru = models.TextField(null=True, blank=True)
+    description_en = models.TextField(null=True, blank=True)
     image = models.ImageField(upload_to='category_images/')
     priority = models.IntegerField(default=0)
 
@@ -33,11 +53,11 @@ class Category(Main):
 
 class Product(Main):
     title_uz = models.CharField(max_length=255)
-    title_ru = models.CharField(max_length=255)
-    title_en = models.CharField(max_length=255)
-    description_uz = models.TextField()
-    description_ru = models.TextField()
-    description_en = models.TextField()
+    title_ru = models.CharField(max_length=255, null=True, blank=True)
+    title_en = models.CharField(max_length=255, null=True, blank=True)
+    description_uz = models.TextField(null=True, blank=True)
+    description_ru = models.TextField(null=True, blank=True)
+    description_en = models.TextField(null=True, blank=True)
     price = models.DecimalField(max_digits=20, decimal_places=2)
     
     image_min = ResizedImageField(size = [300,300], quality=100, upload_to='product_images/300/')
@@ -71,11 +91,11 @@ class ProductImage(Main):
 
 class Slider(Main):
     title_uz = models.CharField(max_length=255)
-    title_ru = models.CharField(max_length=255)
-    title_en = models.CharField(max_length=255)
+    title_ru = models.CharField(max_length=255, null=True, blank=True)
+    title_en = models.CharField(max_length=255, null=True, blank=True)
     description_uz = models.TextField()
-    description_ru = models.TextField()
-    description_en = models.TextField()
+    description_ru = models.TextField(null=True, blank=True)
+    description_en = models.TextField(null=True, blank=True)
 
     image_min = ResizedImageField(size = [300,300], quality=100, upload_to='product_images/300/', null=True, blank=True)
     image_max = ResizedImageField(size = [1200,600], quality=100, upload_to='product_images/600/', null=True, blank=True)
@@ -93,11 +113,11 @@ class Slider(Main):
 
 class Blog(Main):
     title_uz = models.CharField(max_length=255)
-    title_ru = models.CharField(max_length=255)
-    title_en = models.CharField(max_length=255)
+    title_ru = models.CharField(max_length=255, null=True, blank=True)
+    title_en = models.CharField(max_length=255, null=True, blank=True)
     description_uz = models.TextField()
-    description_ru = models.TextField()
-    description_en = models.TextField()
+    description_ru = models.TextField(null=True, blank=True)
+    description_en = models.TextField(null=True, blank=True)
 
     image_min = ResizedImageField(size = [300,300], quality=100, upload_to='product_images/300/', null=True, blank=True)
     image_max = ResizedImageField(size = [1200,600], quality=100, upload_to='product_images/600/', null=True, blank=True)
@@ -116,12 +136,12 @@ class Blog(Main):
 
 class Company(Main):
     title_uz = models.CharField(max_length=255)
-    title_ru = models.CharField(max_length=255)
-    title_en = models.CharField(max_length=255)
+    title_ru = models.CharField(max_length=255, null=True, blank=True)
+    title_en = models.CharField(max_length=255, null=True, blank=True)
     
     description_uz = models.TextField()
-    description_ru = models.TextField()
-    description_en = models.TextField()
+    description_ru = models.TextField(null=True, blank=True)
+    description_en = models.TextField(null=True, blank=True)
 
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)

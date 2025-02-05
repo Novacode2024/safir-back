@@ -23,9 +23,11 @@ urlpatterns_views = [
 
     # Product
     path('product/', views.viewProduct, name='view_product'),
+    path('product/detail/<uuid:uuid>/', views.viewProductDetail, name='view_product_detail'),
     path('product/create/', views.createProduct, name='create_product'),
     path('product/update/<uuid:uuid>/', views.updateProduct, name='update_product'),
     path('product/delete/<uuid:uuid>/', views.deleteProduct, name='delete_product'),
+
 
     # ProductImage
     path('productimage/', views.viewProductImage, name='view_product_image'),
@@ -47,9 +49,7 @@ urlpatterns_views = [
 
     # Company
     path('company/', views.viewCompany, name='view_company'),
-    path('company/create/', views.createCompany, name='create_company'),
     path('company/update/<uuid:uuid>/', views.updateCompany, name='update_company'),
-    path('company/delete/<uuid:uuid>/', views.deleteCompany, name='delete_company'),
 
     # CompanyAddress
     path('companyaddress/', views.viewCompanyAddress, name='view_company_address'),

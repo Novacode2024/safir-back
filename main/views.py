@@ -26,11 +26,11 @@ from drf_yasg import openapi
     },
     tags=["Category"]
 )
+
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewCategory(request):
-    data = models.Category.objects.all()
+    data = models.Category.objects.filter(is_active=True)
     serialized_data = ser.CategorySerializer(data, many=True)
     return Response(serialized_data.data, status=status.HTTP_200_OK)
 
@@ -94,7 +94,8 @@ def createCategory(request):
 @permission_classes([IsAuthenticated])
 def deleteCategory(request, uuid):
     category = get_object_or_404(models.Category, uuid=uuid)
-    category.delete()
+    category.is_active = False  
+    category.save()
     return Response({"message": "Category deleted"},status=status.HTTP_200_OK)
 
 
@@ -104,24 +105,49 @@ def deleteCategory(request, uuid):
 
 
 @swagger_auto_schema(
-    method='GET',
-    operation_description="View all products.",
+    method='get',
+    operation_description="View all products. Optionally filter by category.",
+    manual_parameters=[openapi.Parameter('category', openapi.IN_QUERY, description="Filter products by category", type=openapi.TYPE_STRING)],
     responses={
         status.HTTP_200_OK: ser.ProductSerializer(many=True),
+        status.HTTP_400_BAD_REQUEST: "Bad Request",
     },
     tags=["Product"]
 )
+
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewProduct(request):
-    data = models.Product.objects.all()
-    serialized_data = ser.ProductSerializer(data, many=True)
+    products = models.Product.objects.filter(is_active=True)
+    category = request.GET.get('category')
+    
+
+    if category:
+        products = products.filter(category=category)
+        
+    serialized_data = ser.ProductSerializer(products, many=True)
     return Response(serialized_data.data, status=status.HTTP_200_OK)
 
 
 @swagger_auto_schema(
+    method='GET',
+    operation_description="View a specific product.",
+    responses={
+        status.HTTP_200_OK: ser.ProductSerializer,
+    },
+    tags=["Product"]
+)
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+def viewProductDetail(request, uuid):
+    product = get_object_or_404(models.Product, uuid=uuid)
+    serialized_data = ser.ProductSerializer(product)
+    return Response(serialized_data.data, status=status.HTTP_200_OK)
+
+@swagger_auto_schema(
     method='POST',
+
     operation_description="Create a new product.",
     request_body=ser.ProductSerializer,
     responses={
@@ -180,24 +206,33 @@ def updateProduct(request, uuid):
 @permission_classes([IsAuthenticated])
 def deleteProduct(request, uuid):
     product = get_object_or_404(models.Product, uuid=uuid)
-    product.delete()
+    product.is_active = False
+    product.save()
     return Response({"message": "Product deleted"},status=status.HTTP_200_OK)
+
 
 @swagger_auto_schema(
     method='GET',
-    operation_description="View all product images.",
+    operation_description="View all product images. Optionally filter by product.",
+    manual_parameters=[openapi.Parameter('product', openapi.IN_QUERY, description="Filter product images by product", type=openapi.TYPE_STRING)],
     responses={
         status.HTTP_200_OK: ser.ProductImageSerializer(many=True),
     },
+
     tags=["ProductImage"]
 )
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewProductImage(request):
-    data = models.ProductImage.objects.all()
-    serialized_data = ser.ProductImageSerializer(data, many=True)
-    return Response(serialized_data.data)
+    product_images = models.ProductImage.objects.filter(is_active=True)
+    product = request.GET.get('product')
+    if product:
+        product_images = product_images.filter(product=product)
+
+    serialized_data = ser.ProductImageSerializer(product_images, many=True)
+    return Response(serialized_data.data, status=status.HTTP_200_OK)
+
+
 
 @swagger_auto_schema(
     method='POST',
@@ -209,15 +244,24 @@ def viewProductImage(request):
     },
     tags=["ProductImage"]
 )
+
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def createProductImage(request):
-    serializer = ser.ProductImageSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        product = request.data['product']
+        images = request.FILES.getlist('images')
+        for image in images:
+            models.ProductImage.objects.create(
+                product = models.Product.objects.get(uuid = product),
+                image = image
+            )
+        return Response({"message": "Product images created"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 @swagger_auto_schema(
     method='PUT',
@@ -257,8 +301,10 @@ def updateProductImage(request, uuid):
 @permission_classes([IsAuthenticated])
 def deleteProductImage(request, uuid):
     product = get_object_or_404(models.ProductImage, uuid=uuid)
-    product.delete()
+    product.is_active = False
+    product.save()
     return Response({"message": "Product Image deleted"},status=status.HTTP_200_OK)
+
 
 
 #########################
@@ -276,11 +322,11 @@ def deleteProductImage(request, uuid):
 )
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewSlider(request):
-    data = models.Slider.objects.all()
+    data = models.Slider.objects.filter(is_active=True)
     serialized_data = ser.SliderSerializer(data, many=True)
     return Response(serialized_data.data)
+
 
 
 @swagger_auto_schema(
@@ -343,8 +389,10 @@ def updateSlider(request, uuid):
 @permission_classes([IsAuthenticated])
 def deleteSlider(request, uuid):
     slider = get_object_or_404(models.Slider, uuid=uuid)
-    slider.delete()
+    slider.is_active = False
+    slider.save()
     return Response({"message": "Slider deleted"},status=status.HTTP_200_OK)
+
 
 
 
@@ -362,11 +410,11 @@ def deleteSlider(request, uuid):
 )
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewBlog(request):
-    data = models.Blog.objects.all()
+    data = models.Blog.objects.filter(is_active=True)
     serialized_data = ser.BlogSerializer(data, many=True)
     return Response(serialized_data.data)
+
 
 
 @swagger_auto_schema(
@@ -429,8 +477,10 @@ def updateBlog(request, uuid):
 @permission_classes([IsAuthenticated])
 def deleteBlog(request, uuid):
     blog = get_object_or_404(models.Blog, uuid=uuid)
-    blog.delete()
+    blog.is_active = False
+    blog.save()
     return Response({"message": "Blog deleted"},status=status.HTTP_200_OK)
+
 
 
 
@@ -440,41 +490,26 @@ def deleteBlog(request, uuid):
 
 @swagger_auto_schema(
     method='GET',
-    operation_description="View company details.",
+    operation_description="View company details. If multiple companies are found, the last one will be returned.",
     responses={
         status.HTTP_200_OK: ser.CompanySerializer(many=True),
     },
     tags=["Company"]
 )
+
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewCompany(request):
-    data = models.Company.objects.all()
-    serialized_data = ser.CompanySerializer(data, many=True)
-    return Response(serialized_data.data)
-
-
-@swagger_auto_schema(
-    method='POST',
-    operation_description="Create company details.",
-    request_body=ser.CompanySerializer,
-    responses={
-        status.HTTP_200_OK: ser.CompanySerializer,
-        status.HTTP_400_BAD_REQUEST: "Bad Request",
-    },
-    tags=["Company"]
-)
-@api_view(['POST'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def createCompany(request):
-    serializer = ser.CompanySerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    try:
+        data = models.Company.objects.filter(is_active=True)
+        if data.count() >= 1:
+            data = data.last()
+            serialized_data = ser.CompanySerializer(data)
+            return Response(serialized_data.data)
+        else:
+            return Response({"message": "Multiple companies found"},status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"message": str(e)},status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
     method='PUT',
@@ -493,30 +528,12 @@ def createCompany(request):
 def updateCompany(request, uuid):
     company = get_object_or_404(models.Company, uuid=uuid)
     serializer = ser.CompanySerializer(company, data=request.data, partial=True)
-
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-@swagger_auto_schema(
-    method='DELETE',
-    operation_description="Delete company details.",
-    responses={
-        status.HTTP_200_OK: "Company deleted",
-        status.HTTP_404_NOT_FOUND: "Company not found",
-    },
-    tags=["Company"]
-)
-@api_view(['DELETE'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def deleteCompany(request, uuid):
-    company = get_object_or_404(models.Company, uuid=uuid)
-    company.delete()
-    return Response({"message": "Company deleted"},status=status.HTTP_200_OK)
 
 
 #########################
@@ -533,11 +550,11 @@ def deleteCompany(request, uuid):
 )
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewCompanyAddress(request):
-    data = models.CompanyAddress.objects.all()
+    data = models.CompanyAddress.objects.filter(is_active=True)
     serialized_data = ser.CompanyAddressSerializer(data, many=True)
     return Response(serialized_data.data)
+
 
 
 @swagger_auto_schema(
@@ -600,8 +617,10 @@ def updateCompanyAddress(request, uuid):
 @permission_classes([IsAuthenticated])
 def deleteCompanyAddress(request, uuid):
     companyaddress = get_object_or_404(models.CompanyAddress, uuid=uuid)
-    companyaddress.delete()
+    companyaddress.is_active = False
+    companyaddress.save()
     return Response({"message": "Company Address deleted"},status=status.HTTP_200_OK)
+
 
 
 
@@ -618,9 +637,8 @@ def deleteCompanyAddress(request, uuid):
 )
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewCompanyImage(request):
-    data = models.CompanyImage.objects.all()
+    data = models.CompanyImage.objects.filter(is_active=True)
     serialized_data = ser.CompanyImageSerializer(data, many=True)
     return Response(serialized_data.data)
 
@@ -682,8 +700,10 @@ def updateCompanyImage(request, uuid):
 @permission_classes([IsAuthenticated])
 def deleteCompanyImage(request, uuid):
     companyimage = get_object_or_404(models.CompanyImage, uuid=uuid)
-    companyimage.delete()
+    companyimage.is_active = False
+    companyimage.save()
     return Response({"message": "Company Image deleted"},status=status.HTTP_200_OK)
+
 
 
 #########################
@@ -700,9 +720,8 @@ def deleteCompanyImage(request, uuid):
 )
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewCompanyPhone(request):
-    data = models.CompanyPhone.objects.all()
+    data = models.CompanyPhone.objects.filter(is_active=True)
     serialized_data = ser.CompanyPhoneSerializer(data, many=True)
     return Response(serialized_data.data)
 
@@ -767,8 +786,10 @@ def updateCompanyPhone(request, uuid):
 @permission_classes([IsAuthenticated])
 def deleteCompanyPhone(request, uuid):
     companyphone = get_object_or_404(models.CompanyPhone, uuid=uuid)
-    companyphone.delete()
+    companyphone.is_active = False
+    companyphone.save()
     return Response({"message": "Company Phone deleted"},status=status.HTTP_200_OK)
+
 
 
 #########################
@@ -785,9 +806,8 @@ def deleteCompanyPhone(request, uuid):
 )
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewCompanyEmail(request):
-    data = models.CompanyEmail.objects.all()
+    data = models.CompanyEmail.objects.filter(is_active=True)
     serialized_data = ser.CompanyEmailSerializer(data, many=True)
     return Response(serialized_data.data)
 
@@ -852,8 +872,10 @@ def updateCompanyEmail(request, uuid):
 @permission_classes([IsAuthenticated])
 def deleteCompanyEmail(request, uuid):
     companyemail = get_object_or_404(models.CompanyEmail, uuid=uuid)
-    companyemail.delete()
+    companyemail.is_active = False
+    companyemail.save()
     return Response({"message": "Company Email deleted"},status=status.HTTP_200_OK)
+
 
 
 
@@ -871,9 +893,8 @@ def deleteCompanyEmail(request, uuid):
 )
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def viewContact(request):
-    data = models.Contact.objects.all()
+    data = models.Contact.objects.filter(is_active=True)
     serialized_data = ser.ContactSerializer(data, many=True)
     return Response(serialized_data.data)
 
@@ -938,5 +959,6 @@ def updateContact(request, uuid):
 @permission_classes([IsAuthenticated])
 def deleteContact(request, uuid):
     contact = get_object_or_404(models.Contact, uuid=uuid)
-    contact.delete()
+    contact.is_active = False
+    contact.save()
     return Response({"message": "Contact deleted"},status=status.HTTP_200_OK)
