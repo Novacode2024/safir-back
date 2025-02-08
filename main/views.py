@@ -73,20 +73,15 @@ def updateCategory(request, uuid):
 
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def createCategory(request):
-    try:
-        category = models.Category.objects.create(
-            title_uz = request.data['title_uz'],
-            image = request.FILES.get('image'),
-            description_uz =  request.data.get('description_uz'),
-            priority = request.data['priority'],
-        )
-        serializer = ser.CategorySerializer(category)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+    category = models.Category.objects.create(
+        title_uz = request.data['title_uz'],
+        image = request.FILES.get('image'),
+        description_uz =  request.data.get('description_uz'),
+        priority = request.data['priority'],
+    )
+    serializer = ser.CategorySerializer(category)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
