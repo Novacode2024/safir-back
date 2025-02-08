@@ -1,9 +1,9 @@
-from googletrans import Translator
 
+from deep_translator import GoogleTranslator
 
-
-def translate_text(text, target_language:str) -> str:
-    translator = Translator()
-    translation = translator.translate(text, dest=target_language)
-
-    return translation.text
+def translate_text(text: str, target_language: str) -> str:
+    try:
+        translation = GoogleTranslator(source='auto', target=target_language).translate(text)
+        return translation
+    except Exception as e:
+        return f"Error: {str(e)}"

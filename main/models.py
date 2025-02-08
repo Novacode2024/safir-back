@@ -1,9 +1,7 @@
 from django.db import models
 from shortuuidfield import ShortUUIDField
 from django_resized import ResizedImageField
-from googletrans import Translator
-
-translator = Translator()
+from deep_translator import GoogleTranslator
 
 class Main(models.Model):
     uuid = ShortUUIDField(primary_key=True)
@@ -18,18 +16,16 @@ class Main(models.Model):
                     uz_value = getattr(self, field.name)
                     ru_field_name = field.name.replace('_uz', '_ru')
                     en_field_name = field.name.replace('_uz', '_en')
-
                     if uz_value:
                         if hasattr(self, ru_field_name):
-                            setattr(self, ru_field_name, translator.translate(uz_value, src="uz", dest="ru").text)
+                            setattr(self, ru_field_name, GoogleTranslator(source='uz', target='ru').translate(uz_value))
                         if hasattr(self, en_field_name):
-                            setattr(self, en_field_name, translator.translate(uz_value, src="uz", dest="en").text)
+                            setattr(self, en_field_name, GoogleTranslator(source='uz', target='en').translate(uz_value))
         
         super(Main, self).save(*args, **kwargs)
 
     class Meta:
         abstract = True
-
 
 
 class Category(Main):
