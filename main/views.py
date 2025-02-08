@@ -73,6 +73,7 @@ def updateCategory(request, uuid):
 
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def createCategory(request):
     category = models.Category.objects.create(
         title_uz = request.data['title_uz'],
