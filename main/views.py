@@ -2,11 +2,12 @@ from django.shortcuts import render
 from . import  models
 from . import serializers as ser
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes, parser_classes
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from django.shortcuts import get_object_or_404
+from rest_framework.parsers import MultiPartParser, FormParser
 
 # --- Add import for drf_yasg decorators ---
 from drf_yasg.utils import swagger_auto_schema
@@ -32,7 +33,7 @@ from drf_yasg import openapi
 def viewCategory(request):
     data = models.Category.objects.filter(is_active=True)
     serialized_data = ser.CategorySerializer(data, many=True)
-    return Response(serialized_data.data, status=status.HTTP_200_OK)
+    return Response({"categories": serialized_data.data}, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
     method='PUT',
@@ -67,17 +68,27 @@ def updateCategory(request, uuid):
         status.HTTP_200_OK: ser.CategorySerializer,
         status.HTTP_400_BAD_REQUEST: "Bad Request",
     },
-    tags=["Category"] # ADD TAGS HERE
+    tags=["Category"]
 )
+
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def createCategory(request):
-    serializer = ser.CategorySerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
+    try:
+        category = models.Category.objects.create(
+            title_uz = request.data['title_uz'],
+            image = request.FILES.get('image'),
+            description_uz =  request.data.get('description_uz'),
+            priority = request.data['priority'],
+        )
+        serializer = ser.CategorySerializer(category)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 
 @swagger_auto_schema(
@@ -93,7 +104,9 @@ def createCategory(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def deleteCategory(request, uuid):
-    category = get_object_or_404(models.Category, uuid=uuid)
+    print("asdasda s-=-=-=-=-=-=-=-=")
+    category = models.Category.objects.get(uuid=uuid)
+    print("-=-=--=-=-=-=-=-=-=-=-")
     category.is_active = False  
     category.save()
     return Response({"message": "Category deleted"},status=status.HTTP_200_OK)
@@ -126,7 +139,7 @@ def viewProduct(request):
         products = products.filter(category=category)
         
     serialized_data = ser.ProductSerializer(products, many=True)
-    return Response(serialized_data.data, status=status.HTTP_200_OK)
+    return Response({"products": serialized_data.data}, status=status.HTTP_200_OK)
 
 
 @swagger_auto_schema(
@@ -160,12 +173,21 @@ def viewProductDetail(request, uuid):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def createProduct(request):
-    serializer = ser.ProductSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
+    try: 
+        category = get_object_or_404(models.Category, uuid=request.data['category'])
+        product = models.Product.objects.create(
+            title_uz = request.data['title_uz'],
+            price = request.datap['price'], 
+            image_min = request.FILES.get('image'),
+            image_max = request.FILES.get('image'),
+            category = category,
+            description_uz =  request.data.get('description_uz'),
+            priority = request.data['priority'],
+        )
+        serializer = ser.ProductSerializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
     method='PUT',
@@ -230,7 +252,7 @@ def viewProductImage(request):
         product_images = product_images.filter(product=product)
 
     serialized_data = ser.ProductImageSerializer(product_images, many=True)
-    return Response(serialized_data.data, status=status.HTTP_200_OK)
+    return Response({"productImages": serialized_data.data}, status=status.HTTP_200_OK)
 
 
 
@@ -325,7 +347,7 @@ def deleteProductImage(request, uuid):
 def viewSlider(request):
     data = models.Slider.objects.filter(is_active=True)
     serialized_data = ser.SliderSerializer(data, many=True)
-    return Response(serialized_data.data)
+    return Response({"sliders": serialized_data.data}, status=status.HTTP_200_OK)
 
 
 
@@ -341,13 +363,19 @@ def viewSlider(request):
 )
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
 def createSlider(request):
-    serializer = ser.SliderSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    slider = models.Slider.objects.create(
+        title_uz = request.data['title_uz'],
+        image_min = request.FILES.get('image'),
+        image_max = request.FILES.get('image'),
+        description_uz =  request.data['description_uz'],
+        priority = request.data['priority'],
+    )
+    serializer = ser.SliderSerializer(slider)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 
 @swagger_auto_schema(
@@ -413,7 +441,7 @@ def deleteSlider(request, uuid):
 def viewBlog(request):
     data = models.Blog.objects.filter(is_active=True)
     serialized_data = ser.BlogSerializer(data, many=True)
-    return Response(serialized_data.data)
+    return Response({"blogs": serialized_data.data}, status=status.HTTP_200_OK)
 
 
 
@@ -429,13 +457,21 @@ def viewBlog(request):
 )
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
+@parser_classes([MultiPartParser, FormParser])
 @permission_classes([IsAuthenticated])
 def createBlog(request):
-    serializer = ser.BlogSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
+    try:
+        blog = models.Blog.objects.create(
+            title_uz = request.data['title_uz'],
+            image_min = request.FILES.get('image'),
+            image_max = request.FILES.get('image'),
+            description_uz =  request.data['description_uz'],
+            priority = request.data['priority'],
+        )
+        serializer = ser.BlogSerializer(blog)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"message": str(e)},status=status.HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(
@@ -505,7 +541,7 @@ def viewCompany(request):
         if data.count() >= 1:
             data = data.last()
             serialized_data = ser.CompanySerializer(data)
-            return Response(serialized_data.data)
+            return Response({"company": serialized_data.data}, status=status.HTTP_200_OK)
         else:
             return Response({"message": "Multiple companies found"},status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
@@ -553,7 +589,7 @@ def updateCompany(request, uuid):
 def viewCompanyAddress(request):
     data = models.CompanyAddress.objects.filter(is_active=True)
     serialized_data = ser.CompanyAddressSerializer(data, many=True)
-    return Response(serialized_data.data)
+    return Response({"companyAddresses": serialized_data.data}, status=status.HTTP_200_OK)
 
 
 
@@ -634,13 +670,14 @@ def deleteCompanyAddress(request, uuid):
         status.HTTP_200_OK: ser.CompanyImageSerializer(many=True),
     },
     tags=["CompanyImage"]
-)
+) 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 def viewCompanyImage(request):
     data = models.CompanyImage.objects.filter(is_active=True)
     serialized_data = ser.CompanyImageSerializer(data, many=True)
-    return Response(serialized_data.data)
+    
+    return Response({"companyImages": serialized_data.data}) 
 
 @swagger_auto_schema(
     method='POST',
@@ -656,11 +693,15 @@ def viewCompanyImage(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def createCompanyImage(request):
-    serializer = ser.CompanyImageSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try: 
+        images = request.FILES.getlist('images')
+        for image in images:
+            models.CompanyImage.objects.create(
+                image = image
+            )
+        return Response({"message": "Company images created"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
     method='PUT',
@@ -723,7 +764,7 @@ def deleteCompanyImage(request, uuid):
 def viewCompanyPhone(request):
     data = models.CompanyPhone.objects.filter(is_active=True)
     serialized_data = ser.CompanyPhoneSerializer(data, many=True)
-    return Response(serialized_data.data)
+    return Response({"companyPhones": serialized_data.data}, status=status.HTTP_200_OK)
 
 
 @swagger_auto_schema(
@@ -809,7 +850,7 @@ def deleteCompanyPhone(request, uuid):
 def viewCompanyEmail(request):
     data = models.CompanyEmail.objects.filter(is_active=True)
     serialized_data = ser.CompanyEmailSerializer(data, many=True)
-    return Response(serialized_data.data)
+    return Response({"companyEmails": serialized_data.data}, status=status.HTTP_200_OK)
 
 
 @swagger_auto_schema(
@@ -890,13 +931,13 @@ def deleteCompanyEmail(request, uuid):
         status.HTTP_200_OK: ser.ContactSerializer(many=True),
     },
     tags=["Contact"]
-)
+) 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 def viewContact(request):
     data = models.Contact.objects.filter(is_active=True)
     serialized_data = ser.ContactSerializer(data, many=True)
-    return Response(serialized_data.data)
+    return Response({"cit ontacts": serialized_data.data}, status=status.HTTP_200_OK)
 
 
 @swagger_auto_schema(
@@ -911,7 +952,6 @@ def viewContact(request):
 )
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def createContact(request):
     serializer = ser.ContactSerializer(data=request.data)
     if serializer.is_valid():
@@ -933,7 +973,6 @@ def createContact(request):
 )
 @api_view(['PUT'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def updateContact(request, uuid):
     contact = get_object_or_404(models.Contact, uuid=uuid)
     serializer = ser.ContactSerializer(contact, data=request.data, partial=True)
@@ -956,7 +995,6 @@ def updateContact(request, uuid):
 )
 @api_view(['DELETE'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 def deleteContact(request, uuid):
     contact = get_object_or_404(models.Contact, uuid=uuid)
     contact.is_active = False
