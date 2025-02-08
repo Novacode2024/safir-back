@@ -16,6 +16,8 @@ schema_view = get_schema_view(
 
 
 urlpatterns_views = [
+
+    
     path('category/', views.viewCategory, name='view_category'),
     path('category/create/', views.createCategory, name='create_category'),
     path('category/update/<str:uuid>/', views.updateCategory, name='update_category'),
