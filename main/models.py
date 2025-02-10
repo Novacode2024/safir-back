@@ -64,9 +64,14 @@ class Product(Main):
     
     def __str__(self):
         return self.title_uz
+    
+    @property
+    def total_images(self):
+        return self.productimage_set.count()
 
     class Meta:
         verbose_name = 'Product'
+
         verbose_name_plural = 'Products'
         ordering = ('priority',)
 
@@ -147,7 +152,7 @@ class Company(Main):
     address_en = models.CharField(max_length=255)
 
     video = models.URLField(null=True, blank=True)
-    
+
     instagram = models.CharField(max_length=255, null=True, blank=True)
     youtube = models.CharField(max_length=255, null=True, blank=True)
     facebook = models.CharField(max_length=255, null=True, blank=True)
