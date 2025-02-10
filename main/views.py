@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from django.shortcuts import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser
+from . import funcs
 
 # --- Add import for drf_yasg decorators ---
 from drf_yasg.utils import swagger_auto_schema
@@ -129,13 +130,29 @@ def deleteCategory(request, uuid):
 def viewProduct(request):
     products = models.Product.objects.filter(is_active=True)
     category = request.GET.get('category')
-    
+    try:
+        page_number = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 20))
+    except ValueError:
+        page_number, page_size = 1, 20
+
+
+    products = funcs.paginate_queryset(products, page_number, page_size)
+
 
     if category:
         products = products.filter(category=category)
         
-    serialized_data = ser.ProductSerializer(products, many=True)
-    return Response({"products": serialized_data.data}, status=status.HTTP_200_OK)
+    serialized_data = ser.ProductSerializer(products['items'], many=True)
+    return Response({
+        "products": serialized_data.data, 
+        "page": products['page'],
+        "page_size": products['page_size'],
+        "total_pages": products['total_pages'],
+        "total_products": products['total_items'],
+        }, status=status.HTTP_200_OK)
+
+
 
 
 @swagger_auto_schema(
@@ -250,7 +267,6 @@ def viewProductImage(request):
 
     serialized_data = ser.ProductImageSerializer(product_images, many=True)
     return Response({"productImages": serialized_data.data}, status=status.HTTP_200_OK)
-
 
 
 @swagger_auto_schema(
