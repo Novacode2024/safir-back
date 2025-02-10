@@ -9,10 +9,21 @@ class CategorySerializer(serializers.ModelSerializer):
         
                     
 class ProductSerializer(serializers.ModelSerializer):
+    total_images = serializers.SerializerMethodField()
+    product_images = serializers.SerializerMethodField()
+    
+    def get_total_images(self, obj):
+        return obj.total_images
+    
+    def get_product_images(self, obj):
+        return ProductImageSerializer(obj.productimage_set.all(), many=True).data
+    
+
     class Meta:
         model = models.Product
         fields = '__all__'
         
+
                     
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
