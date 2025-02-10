@@ -266,22 +266,31 @@ def viewProductImage(request):
 
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
 def createProductImage(request):
     try:
-        product = request.data['product']
-        images = request.FILES.getlist('images')
+        product = request.data.get('product')
+        if not product:
+            return Response({"message": "Product UUID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        product_instance = get_object_or_404(models.Product, uuid=product)
+
+        images = []
+        if 'image' in request.FILES:
+            images.append(request.FILES['image'])
+
+        if not images:
+            return Response({"message": "No images provided"}, status=status.HTTP_400_BAD_REQUEST)
+
         for image in images:
-            models.ProductImage.objects.create(
-                product = models.Product.objects.get(uuid = product),
-                image_min = image,
-                image_max = image
-            )
-        serializer = ser.ProductImageSerializer(models.ProductImage.objects.filter(product=product), many=True)
+            models.ProductImage.objects.create(product=product_instance, image_min=image, image_max=image)
+
+
+        serializer = ser.ProductImageSerializer(models.ProductImage.objects.filter(product=product_instance), many=True)
         return Response({"productImages": serializer.data}, status=status.HTTP_200_OK)
+
     except Exception as e:
         return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 @swagger_auto_schema(
