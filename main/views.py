@@ -274,9 +274,11 @@ def createProductImage(request):
         for image in images:
             models.ProductImage.objects.create(
                 product = models.Product.objects.get(uuid = product),
-                image = image
+                image_min = image,
+                image_max = image
             )
-        return Response({"message": "Product images created"}, status=status.HTTP_200_OK)
+        serializer = ser.ProductImageSerializer(models.ProductImage.objects.filter(product=product), many=True)
+        return Response({"productImages": serializer.data}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
