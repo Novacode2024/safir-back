@@ -51,7 +51,7 @@ urlpatterns_views = [
 
     # Company
     path('company/', views.viewCompany, name='view_company'),
-    path('company/update/<str:uuid>/', views.updateCompany, name='update_company'),
+    path('company/update/', views.updateCompany, name='update_company'),
 
     # CompanyAddress
     path('companyaddress/', views.viewCompanyAddress, name='view_company_address'),

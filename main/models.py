@@ -146,7 +146,10 @@ class Company(Main):
     address_ru = models.CharField(max_length=255)
     address_en = models.CharField(max_length=255)
 
+    video = models.URLField(null=True, blank=True)
+    
     instagram = models.CharField(max_length=255, null=True, blank=True)
+    youtube = models.CharField(max_length=255, null=True, blank=True)
     facebook = models.CharField(max_length=255, null=True, blank=True)
     telegram = models.CharField(max_length=255, null=True, blank=True)
     whatsapp = models.CharField(max_length=255, null=True, blank=True)
