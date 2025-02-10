@@ -152,7 +152,7 @@ def viewProduct(request):
 def viewProductDetail(request, uuid):
     product = get_object_or_404(models.Product, uuid=uuid)
     serialized_data = ser.ProductSerializer(product)
-    return Response(serialized_data.data, status=status.HTTP_200_OK)
+    return Response({"productDetail": serialized_data.data}, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
     method='POST',
