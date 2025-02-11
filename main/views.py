@@ -544,7 +544,7 @@ def viewBlogDetail(request, uuid):
     try:
         blog = get_object_or_404(models.Blog, uuid=uuid)
         serialized_data = ser.BlogSerializer(blog)
-        return Response(serialized_data.data, status=status.HTTP_200_OK)
+        return Response({"blogDetail": serialized_data.data}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"message": str(e)},status=status.HTTP_400_BAD_REQUEST)
 
