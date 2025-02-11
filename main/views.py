@@ -147,19 +147,19 @@ def viewProduct(request):
         products = products.filter(category=category_instance)
 
     try:
-        limit = int(request.GET.get('limit', 12))  # Dastlab 2 ta mahsulot chiqaramiz
+        limit = int(request.GET.get('limit', 12)) 
     except ValueError:
         limit = 12
 
     total_products = products.count()
-    product_list = products[:limit]  # Faqat kerakli qismini olish
+    product_list = products[:limit] 
 
     serialized_data = ser.ProductSerializer(product_list, many=True)
 
     return Response({
         "products": serialized_data.data,
-        "next_limit": limit + 2 if limit + 2 <= total_products else total_products,  # Keyingi limitni oshiramiz
-        "has_more": limit < total_products  # Yana mahsulotlar bormi yoki yo‘qligini bildiradi
+        "next_limit": limit + 12 if limit + 12 <= total_products else total_products, 
+        "has_more": limit < total_products
     }, status=status.HTTP_200_OK)
 
 
