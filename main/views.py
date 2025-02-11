@@ -141,6 +141,7 @@ def deleteCategory(request, uuid):
 def viewProduct(request):
     products = models.Product.objects.filter(is_active=True)
     category = request.GET.get('category')
+    
 
     if category:
         category_instance = get_object_or_404(models.Category, uuid=category)
