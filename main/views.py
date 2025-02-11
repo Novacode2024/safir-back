@@ -141,7 +141,7 @@ def deleteCategory(request, uuid):
 def viewProduct(request):
     products = models.Product.objects.filter(is_active=True)
     category = request.GET.get('category')
-    
+
 
     if category:
         category_instance = get_object_or_404(models.Category, uuid=category)
@@ -528,6 +528,25 @@ def updateBlog(request, uuid):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@swagger_auto_schema(
+    method='GET',
+    operation_description="View a specific blog post.",
+    responses={
+        status.HTTP_200_OK: ser.BlogSerializer,
+    },
+    tags=["Blog"]
+)
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+def viewBlogDetail(request, uuid):
+    try:
+        blog = get_object_or_404(models.Blog, uuid=uuid)
+        serialized_data = ser.BlogSerializer(blog)
+        return Response(serialized_data.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"message": str(e)},status=status.HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(

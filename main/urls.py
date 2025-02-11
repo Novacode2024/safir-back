@@ -47,6 +47,7 @@ urlpatterns_views = [
     path('blog/', views.viewBlog, name='view_blog'),
     path('blog/create/', views.createBlog, name='create_blog'),
     path('blog/update/<str:uuid>/', views.updateBlog, name='update_blog'),
+    path('blog/detail/<str:uuid>/', views.viewBlogDetail, name='view_blog_detail'),
     path('blog/delete/<str:uuid>/', views.deleteBlog, name='delete_blog'),
 
     # Company
