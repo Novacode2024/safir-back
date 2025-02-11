@@ -136,13 +136,13 @@ def viewProduct(request):
     except ValueError:
         page_number, page_size = 1, 20
 
+    if bool(category):
+        category = models.Category.objects.get(uuid=category)
+        if category:
+            products = products.filter(category=category)
 
     products = funcs.paginate_queryset(products, page_number, page_size)
-
-
-    if category:
-        products = products.filter(category=category)
-        
+            
     serialized_data = ser.ProductSerializer(products['items'], many=True)
     return Response({
         "products": serialized_data.data, 
