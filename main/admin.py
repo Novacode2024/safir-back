@@ -24,10 +24,7 @@ class ProductAdmin(admin.ModelAdmin):
         'description_en',
     ]
 
-@admin.register(models.ProductImage)
-class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ['uuid']
-
+admin.site.register(models.ProductImage)
 @admin.register(models.Slider)
 class SliderAdmin(admin.ModelAdmin):
     list_display = [
@@ -73,7 +70,7 @@ class CompanyAddressAdmin(admin.ModelAdmin):
 
 @admin.register(models.CompanyImage)
 class CompanyImageAdmin(admin.ModelAdmin):
-    list_display = []
+    list_display = ["uuid"]
 
 @admin.register(models.CompanyPhone)
 class CompanyPhoneAdmin(admin.ModelAdmin):

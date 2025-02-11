@@ -113,7 +113,6 @@ def deleteCategory(request, uuid):
 # Product
 #########################
 
-
 @swagger_auto_schema(
     method='get',
     operation_description="View active products. Initially returns 2 products, and more can be loaded incrementally (0-2, 0-4, 0-6, etc.).",
@@ -148,9 +147,9 @@ def viewProduct(request):
         products = products.filter(category=category_instance)
 
     try:
-        limit = int(request.GET.get('limit', 2))  # Dastlab 2 ta mahsulot chiqaramiz
+        limit = int(request.GET.get('limit', 12))  # Dastlab 2 ta mahsulot chiqaramiz
     except ValueError:
-        limit = 2
+        limit = 12
 
     total_products = products.count()
     product_list = products[:limit]  # Faqat kerakli qismini olish
