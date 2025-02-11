@@ -115,10 +115,10 @@ def deleteCategory(request, uuid):
 
 @swagger_auto_schema(
     method='get',
-    operation_description="View active products. Initially returns 2 products, and more can be loaded incrementally (0-2, 0-4, 0-6, etc.).",
+    operation_description="View active products. Initially returns 12 products, and more can be loaded incrementally (0-12, 12-24, 24-36, etc.).",
     manual_parameters=[
         openapi.Parameter('category', openapi.IN_QUERY, description="Filter products by category UUID", type=openapi.TYPE_STRING),
-        openapi.Parameter('limit', openapi.IN_QUERY, description="Number of products to fetch (increases by 2 each time)", type=openapi.TYPE_INTEGER, default=2),
+        openapi.Parameter('limit', openapi.IN_QUERY, description="Number of products to fetch (increases by 12 each time)", type=openapi.TYPE_INTEGER, default=12),
     ],
     responses={
         status.HTTP_200_OK: openapi.Response(
