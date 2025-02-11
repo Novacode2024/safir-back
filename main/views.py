@@ -116,43 +116,52 @@ def deleteCategory(request, uuid):
 
 @swagger_auto_schema(
     method='get',
-    operation_description="View all products. Optionally filter by category.",
-    manual_parameters=[openapi.Parameter('category', openapi.IN_QUERY, description="Filter products by category", type=openapi.TYPE_STRING)],
+    operation_description="View active products. Initially returns 2 products, and more can be loaded incrementally (0-2, 0-4, 0-6, etc.).",
+    manual_parameters=[
+        openapi.Parameter('category', openapi.IN_QUERY, description="Filter products by category UUID", type=openapi.TYPE_STRING),
+        openapi.Parameter('limit', openapi.IN_QUERY, description="Number of products to fetch (increases by 2 each time)", type=openapi.TYPE_INTEGER, default=2),
+    ],
     responses={
-        status.HTTP_200_OK: ser.ProductSerializer(many=True),
-        status.HTTP_400_BAD_REQUEST: "Bad Request",
+        status.HTTP_200_OK: openapi.Response(
+            description="Successful response with product data",
+            schema=openapi.Schema(type=openapi.TYPE_OBJECT,properties={
+                    "products": openapi.Schema(type=openapi.TYPE_ARRAY,items=openapi.Schema(type=openapi.TYPE_OBJECT)),
+                    "next_limit": openapi.Schema(type=openapi.TYPE_INTEGER,description="Next limit for fetching more products"),
+                    "has_more": openapi.Schema(type=openapi.TYPE_BOOLEAN,description="Indicates if more products are available")
+                },
+            ),
+        ),
+        status.HTTP_400_BAD_REQUEST: openapi.Response(description="Bad Request"),
     },
     tags=["Product"]
 )
+
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 def viewProduct(request):
     products = models.Product.objects.filter(is_active=True)
     category = request.GET.get('category')
+
+    if category:
+        category_instance = get_object_or_404(models.Category, uuid=category)
+        products = products.filter(category=category_instance)
+
     try:
-        page_number = int(request.GET.get('page', 1))
-        page_size = int(request.GET.get('page_size', 20))
+        limit = int(request.GET.get('limit', 2))  # Dastlab 2 ta mahsulot chiqaramiz
     except ValueError:
-        page_number, page_size = 1, 20
+        limit = 2
 
-    if bool(category):
-        category = models.Category.objects.get(uuid=category)
-        if category:
-            products = products.filter(category=category)
+    total_products = products.count()
+    product_list = products[:limit]  # Faqat kerakli qismini olish
 
-    products = funcs.paginate_queryset(products, page_number, page_size)
-            
-    serialized_data = ser.ProductSerializer(products['items'], many=True)
+    serialized_data = ser.ProductSerializer(product_list, many=True)
+
     return Response({
-        "products": serialized_data.data, 
-        "page": products['page'],
-        "page_size": products['page_size'],
-        "total_pages": products['total_pages'],
-        "total_products": products['total_items'],
-        }, status=status.HTTP_200_OK)
-
-
+        "products": serialized_data.data,
+        "next_limit": limit + 2 if limit + 2 <= total_products else total_products,  # Keyingi limitni oshiramiz
+        "has_more": limit < total_products  # Yana mahsulotlar bormi yoki yo‘qligini bildiradi
+    }, status=status.HTTP_200_OK)
 
 
 @swagger_auto_schema(
@@ -291,9 +300,7 @@ def createProductImage(request):
 
         product_instance = get_object_or_404(models.Product, uuid=product)
 
-        images = []
-        if 'image' in request.FILES:
-            images.append(request.FILES['image'])
+        images = request.FILES.getlist('image')
 
         if not images:
             return Response({"message": "No images provided"}, status=status.HTTP_400_BAD_REQUEST)
