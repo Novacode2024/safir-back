@@ -2,12 +2,21 @@ from django.db import models
 from shortuuidfield import ShortUUIDField
 from django_resized import ResizedImageField
 from deep_translator import GoogleTranslator
+from bs4 import BeautifulSoup
+
 
 class Main(models.Model):
     uuid = ShortUUIDField(primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+
+    def translate_html(self, html_text, target_lang):
+        soup = BeautifulSoup(html_text, "html.parser")
+        for text in soup.find_all(text=True):
+            translated_text = GoogleTranslator(source='uz', target=target_lang).translate(text.strip())
+            text.replace_with(translated_text)
+        return str(soup)
 
     def save(self, *args, **kwargs):
         if not self.uuid:
@@ -16,12 +25,13 @@ class Main(models.Model):
                     uz_value = getattr(self, field.name)
                     ru_field_name = field.name.replace('_uz', '_ru')
                     en_field_name = field.name.replace('_uz', '_en')
+
                     if uz_value:
                         if hasattr(self, ru_field_name):
-                            setattr(self, ru_field_name, GoogleTranslator(source='uz', target='ru').translate(uz_value))
+                            setattr(self, ru_field_name, self.translate_html(uz_value, 'ru'))
                         if hasattr(self, en_field_name):
-                            setattr(self, en_field_name, GoogleTranslator(source='uz', target='en').translate(uz_value))
-        
+                            setattr(self, en_field_name, self.translate_html(uz_value, 'en'))
+
         super(Main, self).save(*args, **kwargs)
 
     class Meta:
