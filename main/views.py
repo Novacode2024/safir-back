@@ -658,6 +658,43 @@ def viewCompany(request):
         return Response({"message": str(e)},status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
+    method='POST',
+    operation_description="Create company details.",
+    request_body=ser.CompanySerializer,
+    responses={
+        status.HTTP_200_OK: ser.CompanySerializer,
+    },
+    tags=["Company"]
+)
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def createCompany(request):
+    try:
+        if models.Company.objects.filter(is_active=True).count() >= 1:
+            return Response({"message": "Company already exists"},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            company = models.Company.objects.create(
+                title_uz = request.data['title_uz'],
+                description_uz = request.data['description_uz'],
+                video = request.FILES.get('video'),
+                instagram = request.data['instagram'],
+                youtube = request.data['youtube'],
+                facebook = request.data['facebook'],
+                telegram = request.data['telegram'],
+                whatsapp = request.data['whatsapp'],
+                address_uz = request.data['address_uz'],
+                latitude = request.data['latitude'],
+                longitude = request.data['longitude'],
+            )
+            serializer = ser.CompanySerializer(company)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"message": str(e)},status=status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(
     method='PUT',
     operation_description="Update company details. Agar uuid berilmasa va kompanya yoq bolsa yangi company yaratadi agar bolsa 400 qaytaradi.",
     request_body=ser.CompanySerializer,
@@ -673,39 +710,17 @@ def viewCompany(request):
 @api_view(['PUT'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def updateCompany(request):
-    if request.data.get('uuid'):
-        company = get_object_or_404(models.Company, uuid=request.data.get('uuid'))
+def updateCompany(request, uuid):
+    try:
+        company = get_object_or_404(models.Company, uuid=uuid)
         serializer = ser.CompanySerializer(company, data=request.data, partial=True)
         if serializer.is_valid():
-
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        if models.Company.objects.filter(is_active=True).count() >= 1:
-            return Response({"message": "Company already exists"},status=status.HTTP_400_BAD_REQUEST)
-        else:
-            company = models.Company.objects.create(
-                title_uz = request.data['title_uz'],
-                description_uz = request.data['description_uz'],
-
-            address_uz = request.data['address_uz'],
-            latitude = request.data['latitude'],
-            longitude = request.data['longitude'],
-
-            video = request.data['video'],
-            instagram = request.data['instagram'],
-            facebook = request.data['facebook'],
-            youtube = request.data['youtube'],
-            telegram = request.data['telegram'],
-            whatsapp = request.data['whatsapp'],
-        )
-        serializer = ser.CompanySerializer(company)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"message": str(e)},status=status.HTTP_400_BAD_REQUEST)
 
 
 
