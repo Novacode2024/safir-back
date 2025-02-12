@@ -182,12 +182,40 @@ def viewProductDetail(request, uuid):
 
 @swagger_auto_schema(
     method='POST',
-
     operation_description="Create a new product.",
-    category = openapi.Parameter('category', openapi.IN_BODY, description="Category UUID", type=openapi.TYPE_STRING),
-    request_body=ser.ProductSerializer,
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['category', 'title_uz', 'price', 'image', 'priority'],
+        properties={'category': openapi.Schema(
+                type=openapi.TYPE_STRING,
+                description="Category UUID"
+            ),
+            'title_uz': openapi.Schema(
+                type=openapi.TYPE_STRING,
+                description="Product title in Uzbek"
+            ),
+            'price': openapi.Schema(
+                type=openapi.TYPE_NUMBER,
+                description="Product price"
+            ),
+            'image': openapi.Schema(
+                type=openapi.TYPE_STRING,
+                format="binary",
+                description="Product image"
+            ),
+            'description_uz': openapi.Schema(
+                type=openapi.TYPE_STRING,
+                description="Product description in Uzbek",
+                nullable=True
+            ),
+            'priority': openapi.Schema(
+                type=openapi.TYPE_INTEGER,
+                description="Product priority"
+            ),
+        },
+    ),
     responses={
-        status.HTTP_200_OK: ser.ProductSerializer,
+        status.HTTP_200_OK: ser.ProductSerializer(),
         status.HTTP_400_BAD_REQUEST: "Bad Request",
     },
     tags=["Product"]
