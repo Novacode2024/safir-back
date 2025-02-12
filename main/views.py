@@ -1074,7 +1074,7 @@ def deleteCompanyEmail(request, uuid):
 def viewContact(request):
     data = models.Contact.objects.filter(is_active=True)
     serialized_data = ser.ContactSerializer(data, many=True)
-    return Response({"cit ontacts": serialized_data.data}, status=status.HTTP_200_OK)
+    return Response({"contacts": serialized_data.data}, status=status.HTTP_200_OK)
 
 
 @swagger_auto_schema(
