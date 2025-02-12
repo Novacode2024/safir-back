@@ -256,13 +256,29 @@ def createProduct(request):
 @permission_classes([IsAuthenticated])
 def updateProduct(request, uuid):
     product = get_object_or_404(models.Product, uuid=uuid)
-    serializer = ser.ProductSerializer(product, data=request.data, partial=True)
-
-    if serializer.is_valid():
-        serializer.save()
+    category = request.data.get('category')
+    try:
+        try:
+            if bool(category):
+                category = get_object_or_404(models.Category, uuid=category)
+                product.category = category
+        except:
+            pass
+        product.title_uz = request.data['title_uz']
+        product.title_en = request.data['title_en']
+        product.title_ru = request.data['title_ru']
+        product.price = request.data['price'] if request.data['price'] else 0
+        product.image_min = request.FILES.get('image')
+        product.image_max = request.FILES.get('image')
+        product.description_uz = request.data['description_uz']
+        product.description_en = request.data['description_en']
+        product.description_ru = request.data['description_ru']
+        product.priority = request.data['priority']
+        product.save()
+        serializer = ser.ProductSerializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"message": str(e)},status=status.HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(
@@ -452,15 +468,22 @@ def createSlider(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def updateSlider(request, uuid):
-    slider = get_object_or_404(models.Slider, uuid=uuid)
-    serializer = ser.SliderSerializer(slider, data=request.data, partial=True)
-
-    if serializer.is_valid():
-        serializer.save()
+    try:
+        slider = get_object_or_404(models.Slider, uuid=uuid)
+        slider.title_uz = request.data['title_uz']
+        slider.title_en = request.data['title_en']
+        slider.title_ru = request.data['title_ru']
+        slider.image_min = request.FILES.get('image')
+        slider.image_max = request.FILES.get('image')
+        slider.description_uz = request.data['description_uz']
+        slider.description_en = request.data['description_en']
+        slider.description_ru = request.data['description_ru']
+        slider.priority = request.data['priority']
+        slider.save()
+        serializer = ser.SliderSerializer(slider)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    except Exception as e:
+        return Response({"message": str(e)},status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
     method='DELETE',
@@ -548,14 +571,23 @@ def createBlog(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def updateBlog(request, uuid):
-    blog = get_object_or_404(models.Blog, uuid=uuid)
-    serializer = ser.BlogSerializer(blog, data=request.data, partial=True)
-
-    if serializer.is_valid():
-        serializer.save()
+    try:
+        blog = get_object_or_404(models.Blog, uuid=uuid)
+        blog.title_uz = request.data['title_uz']
+        blog.title_en = request.data['title_en']
+        blog.title_ru = request.data['title_ru']
+        blog.image_min = request.FILES.get('image')
+        blog.image_max = request.FILES.get('image')
+        blog.description_uz = request.data['description_uz']
+        blog.description_en = request.data['description_en']
+        blog.description_ru = request.data['description_ru']
+        blog.priority = request.data['priority']
+        blog.save()
+        serializer = ser.BlogSerializer(blog)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"message": str(e)},status=status.HTTP_400_BAD_REQUEST)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
     method='GET',
